@@ -12,6 +12,7 @@ from math import ceil
 from datetime import date
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
+from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 
 
 YEAR_START = 2023
@@ -20,6 +21,38 @@ YEAR_END = 2024
 MONTH_END = 1
 COLUMN_WIDTH = 3.5
 ROW_HEIGHT = 12.7
+
+weekday_dict = {
+    1: "Ma",
+    2: "Di",
+    3: "Wo",
+    4: "Do",
+    5: "Vr",
+    6: "Za",
+    7: "Zo",
+    8: "Week"
+}
+
+month_dict = {
+    1: "Januari",
+    2: "Februari",
+    3: "Maart",
+    4: "April",
+    5: "Mei",
+    6: "Juni",
+    7: "Juli",
+    8: "Augustus",
+    9: "September",
+    10: "Oktober",
+    11: "November",
+    12: "December"
+}
+
+font_standard = Font(name="Arial", size=10, bold=False)
+font_bold = Font(name="Arial", size=10, bold=True)
+
+h_align_center = Alignment(horizontal="center")
+h_align_right = Alignment(horizontal="right")
 
 
 def get_week_number(year: int, month: int, day: int) -> int:
@@ -36,12 +69,12 @@ if __name__ == "__main__":
     MyCal = calendar.Calendar()
     # Get a list of days for the first requested month
     day_list = [[YEAR_START, MONTH_START, weekday, get_week_number(YEAR_START, MONTH_START, weekday)] for weekday in MyCal.itermonthdays(YEAR_START, MONTH_START)]
-    print(day_list)
+
     # Remove trailing zero's but keep preceeding zero's
     for day in day_list[7:]:
         if day[2] == 0:
             day_list.pop()
-    print(day_list)
+
 
     # Get the next month and year if more than one month is requested
     if not (YEAR_START == YEAR_END and MONTH_START == MONTH_END):
@@ -61,9 +94,7 @@ if __name__ == "__main__":
                 # Break out if the last requested month of the last requested year is added to the list of days
                 if current_year == YEAR_END and current_month == MONTH_END:
                     break
-
                 current_month += 1
-
             current_year += 1
             current_month = 1
 
@@ -77,31 +108,57 @@ if __name__ == "__main__":
     for i in range(1, 10):
         ws.row_dimensions[i].height = ROW_HEIGHT
 
-    # Write row headers
-    ws.cell(row=1, column=1, value=YEAR_START)
-    ws.cell(row=2, column=1, value="Ma")
-    ws.cell(row=3, column=1, value="Di")
-    ws.cell(row=4, column=1, value="Wo")
-    ws.cell(row=5, column=1, value="Do")
-    ws.cell(row=6, column=1, value="Vr")
-    ws.cell(row=7, column=1, value="Za")
-    ws.cell(row=8, column=1, value="Zo")
-    ws.cell(row=9, column=1, value="Week")
+    # Write row header texts
+    ws.cell(row=1, column=1).value = YEAR_START
+    ws.cell(row=1, column=1).font = font_bold
+    ws.cell(row=1, column=1).alignment = h_align_center
+    for i in range(1, 9):
+        ws.cell(row=i + 1, column=1).value = weekday_dict[i]
+        ws.cell(row=i + 1, column=1).font = font_standard
+        ws.cell(row=i + 1, column=1).alignment = h_align_right
 
-    # Get some limits for filling and styling the sheet
+    # Merge row header cells
+    for i in range(1, 10):
+        ws.merge_cells(start_row=i, start_column=1, end_row=i, end_column=2)
+
+    # Get some limits for further filling and styling the sheet
     len_day_list = len(day_list)
     last_column = ceil(len_day_list / 7) + 3
 
-    # Write all dates and weeknumbers from the list of days to the worksheet
+    # Write all month headers, dates and weeknumbers from the list of days to the worksheet
     day_index = 0
     for col in range(3, last_column):
+        if day_index == len_day_list:
+            break
+        # Write month headers
+        ws.cell(row=1, column=col).value = month_dict[day_list[day_index][1]]
+        ws.cell(row=1, column=col).font = font_bold
+        ws.cell(row=1, column=col).alignment = h_align_center
         for row in range(2, 9):
             if day_list[day_index][2] != 0:
-                ws.cell(row=row, column=col, value=day_list[day_index][2])
-                ws.cell(row=9, column=col, value=day_list[day_index][3])
+                # Write day- and weeknumber
+                ws.cell(row=row, column=col).value = day_list[day_index][2]
+                ws.cell(row=row, column=col).font = font_standard
+                ws.cell(row=row, column=col).alignment = h_align_center
+
+                ws.cell(row=9, column=col).value = day_list[day_index][3]
+                ws.cell(row=9, column=col).font = font_standard
+                ws.cell(row=9, column=col).alignment = h_align_center
+
             day_index += 1
             if day_index == len_day_list:
                 break
+
+    # Merge cells with corresponding months
+    prev_cell_content = ws.cell(row=1, column=3).value
+    merge_range_start = 3
+    for col in range(4, last_column + 1):
+        if ws.cell(row=1, column=col).value == prev_cell_content:
+            merge_range_end = col
+        else:
+            ws.merge_cells(start_row=1, start_column=merge_range_start, end_row=1, end_column=merge_range_end)
+            prev_cell_content = ws.cell(row=1, column=col).value
+            merge_range_start = col
 
     # Apply custom width to all columns
     for i in range(1, last_column):
