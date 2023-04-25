@@ -1,6 +1,8 @@
 """ Tiny Calendar Generator
 
 
+-check number formats
+-set print settings
 -add command line arguments for month range
 -add custom row-heights and column-widths?
 -localize day-names and "week"?
@@ -15,9 +17,9 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 
 
-YEAR_START = 2023
+YEAR_START = 2019
 MONTH_START = 1
-YEAR_END = 2024
+YEAR_END = 2020
 MONTH_END = 1
 COLUMN_WIDTH = 3.5
 ROW_HEIGHT = 12.7
@@ -54,6 +56,18 @@ font_bold = Font(name="Arial", size=10, bold=True)
 h_align_center = Alignment(horizontal="center")
 h_align_right = Alignment(horizontal="right")
 
+fill_white = PatternFill("solid", fgColor="FFFFFF")
+fill_lightgrey = PatternFill("solid", fgColor="F2F2F2")
+
+thin = Side(border_style="thin", color="000000")
+medium = Side(border_style="medium", color="000000")
+
+border_LrTb = Border(left=medium, right=thin, top=medium, bottom=thin)
+border_r = Border(right=thin)
+border_LrtB = Border(left=medium, right=thin, top=thin, bottom=medium)
+border_lrTb = Border(left=thin, right=thin, top=medium, bottom=thin)
+border_lRTb = Border(left=thin, right=medium, top=medium, bottom=thin)
+
 
 def get_week_number(year: int, month: int, day: int) -> int:
     # Returns the weeknumber for the given day
@@ -74,7 +88,6 @@ if __name__ == "__main__":
     for day in day_list[7:]:
         if day[2] == 0:
             day_list.pop()
-
 
     # Get the next month and year if more than one month is requested
     if not (YEAR_START == YEAR_END and MONTH_START == MONTH_END):
@@ -108,14 +121,26 @@ if __name__ == "__main__":
     for i in range(1, 10):
         ws.row_dimensions[i].height = ROW_HEIGHT
 
-    # Write row header texts
-    ws.cell(row=1, column=1).value = YEAR_START
-    ws.cell(row=1, column=1).font = font_bold
-    ws.cell(row=1, column=1).alignment = h_align_center
-    for i in range(1, 9):
-        ws.cell(row=i + 1, column=1).value = weekday_dict[i]
-        ws.cell(row=i + 1, column=1).font = font_standard
-        ws.cell(row=i + 1, column=1).alignment = h_align_right
+    # Write row header values and styles
+    c = ws.cell(row=1, column=1)
+    c.value = YEAR_START
+    c.font = font_bold
+    c.alignment = h_align_center
+    c.fill = fill_white
+    c.border = border_LrTb
+    for i in range(1, 8):
+        c = ws.cell(row=i + 1, column=1)
+        c.value = weekday_dict[i]
+        c.font = font_standard
+        c.alignment = h_align_right
+        c.fill = fill_white
+        c.border = border_r
+    c = ws.cell(row=9, column=1)
+    c.value = weekday_dict[8]
+    c.font = font_standard
+    c.alignment = h_align_right
+    c.fill = fill_white
+    c.border = border_LrtB
 
     # Merge row header cells
     for i in range(1, 10):
@@ -123,48 +148,66 @@ if __name__ == "__main__":
 
     # Get some limits for further filling and styling the sheet
     len_day_list = len(day_list)
-    last_column = ceil(len_day_list / 7) + 3
+    last_column = ceil(len_day_list / 7) + 2
+    print(f"Last column = {get_column_letter(last_column)} ({last_column})")
 
     # Write all month headers, dates and weeknumbers from the list of days to the worksheet
     day_index = 0
-    for col in range(3, last_column):
+    for col in range(3, last_column + 1):
         if day_index == len_day_list:
             break
         # Write month headers
-        ws.cell(row=1, column=col).value = month_dict[day_list[day_index][1]]
-        ws.cell(row=1, column=col).font = font_bold
-        ws.cell(row=1, column=col).alignment = h_align_center
+        c = ws.cell(row=1, column=col)
+        c.value = month_dict[day_list[day_index][1]]
+        c.font = font_bold
+        c.alignment = h_align_center
+        c.fill = fill_white
+
+        # Write day- and weeknumber
         for row in range(2, 9):
             if day_list[day_index][2] != 0:
-                # Write day- and weeknumber
-                ws.cell(row=row, column=col).value = day_list[day_index][2]
-                ws.cell(row=row, column=col).font = font_standard
-                ws.cell(row=row, column=col).alignment = h_align_center
+                c = ws.cell(row=row, column=col)
+                c.value = day_list[day_index][2]
+                c.font = font_standard
+                c.alignment = h_align_center
 
-                ws.cell(row=9, column=col).value = day_list[day_index][3]
-                ws.cell(row=9, column=col).font = font_standard
-                ws.cell(row=9, column=col).alignment = h_align_center
+                c = ws.cell(row=9, column=col)
+                c.value = day_list[day_index][3]
+                c.font = font_standard
+                c.alignment = h_align_center
 
             day_index += 1
             if day_index == len_day_list:
                 break
 
-    # Merge cells with corresponding months
+    # Merge cells of corresponding months and set border styles
     prev_cell_content = ws.cell(row=1, column=3).value
     merge_range_start = 3
-    for col in range(4, last_column + 1):
+    ws.cell(row=1, column=3).border = border_lrTb
+    for col in range(4, last_column + 2):
         if ws.cell(row=1, column=col).value == prev_cell_content:
             merge_range_end = col
         else:
-            ws.merge_cells(start_row=1, start_column=merge_range_start, end_row=1, end_column=merge_range_end)
-            prev_cell_content = ws.cell(row=1, column=col).value
-            merge_range_start = col
+            if col == last_column + 1:
+                ws.cell(row=1, column=merge_range_start).border = border_lRTb
+                ws.merge_cells(start_row=1, start_column=merge_range_start, end_row=1, end_column=merge_range_end)
+            else:
+                ws.cell(row=1, column=col).border = border_lrTb
+                ws.merge_cells(start_row=1, start_column=merge_range_start, end_row=1, end_column=merge_range_end)
+                prev_cell_content = ws.cell(row=1, column=col).value
+                merge_range_start = col
 
     # Apply custom width to all columns
-    for i in range(1, last_column):
+    for i in range(1, last_column + 1):
         ws.column_dimensions[get_column_letter(i)].width = COLUMN_WIDTH
 
-
+    # Fill day- and weeknumber grid
+    for col in range(3, last_column + 1):
+        for row in range(2, 7):
+            ws.cell(row=row, column=col).fill = fill_white
+        ws.cell(row=7, column=col).fill = fill_lightgrey
+        ws.cell(row=8, column=col).fill = fill_lightgrey
+        ws.cell(row=9, column=col).fill = fill_white
 
 
 
