@@ -6,6 +6,7 @@
 -add command line arguments for month range
 -add custom row-heights and column-widths?
 -localize day-names and "week"?
+-overrule default filename
 """
 
 
@@ -24,16 +25,13 @@ MONTH_END = 1
 COLUMN_WIDTH = 3.5
 ROW_HEIGHT = 12.7
 
-weekday_dict = {
-    1: "Ma",
-    2: "Di",
-    3: "Wo",
-    4: "Do",
-    5: "Vr",
-    6: "Za",
-    7: "Zo",
-    8: "Week"
-}
+weekday_dict = {}
+i = 1
+for day in range(24, 31):
+    d = date(2023, 4, day)
+    weekday_dict[i] = d.strftime("%a")
+    i += 1
+# weekday_dict[8] = "Week"
 
 month_dict = {
     1: "Januari",
@@ -67,6 +65,11 @@ border_r = Border(right=thin)
 border_LrtB = Border(left=medium, right=thin, top=thin, bottom=medium)
 border_lrTb = Border(left=thin, right=thin, top=medium, bottom=thin)
 border_lRTb = Border(left=thin, right=medium, top=medium, bottom=thin)
+border_lt = Border(left=thin, top=thin)
+border_l = Border(left=thin)
+border_R = Border(right=medium)
+border_lrtB = Border(left=thin, right=thin, top=thin, bottom=medium)
+border_lRtB = Border(left=thin, right=medium, top=thin, bottom=medium)
 
 
 def get_week_number(year: int, month: int, day: int) -> int:
@@ -111,9 +114,6 @@ if __name__ == "__main__":
             current_year += 1
             current_month = 1
 
-    print(day_list)
-    print(len(day_list) / 30)
-
     # Create an openpyxl worksheet and set some properties
     wb = Workbook()
     ws = wb.active
@@ -136,9 +136,9 @@ if __name__ == "__main__":
         c.fill = fill_white
         c.border = border_r
     c = ws.cell(row=9, column=1)
-    c.value = weekday_dict[8]
-    c.font = font_standard
-    c.alignment = h_align_right
+    # c.value = weekday_dict[8]
+    # c.font = font_standard
+    # c.alignment = h_align_right
     c.fill = fill_white
     c.border = border_LrtB
 
@@ -149,7 +149,6 @@ if __name__ == "__main__":
     # Get some limits for further filling and styling the sheet
     len_day_list = len(day_list)
     last_column = ceil(len_day_list / 7) + 2
-    print(f"Last column = {get_column_letter(last_column)} ({last_column})")
 
     # Write all month headers, dates and weeknumbers from the list of days to the worksheet
     day_index = 0
@@ -201,7 +200,7 @@ if __name__ == "__main__":
     for i in range(1, last_column + 1):
         ws.column_dimensions[get_column_letter(i)].width = COLUMN_WIDTH
 
-    # Fill day- and weeknumber grid
+    # Background fill day- and weeknumber grid
     for col in range(3, last_column + 1):
         for row in range(2, 7):
             ws.cell(row=row, column=col).fill = fill_white
@@ -209,8 +208,24 @@ if __name__ == "__main__":
         ws.cell(row=8, column=col).fill = fill_lightgrey
         ws.cell(row=9, column=col).fill = fill_white
 
+    # Set borders for daynumber grid
+    for col in range(3, last_column):
+        for row in range(2, 9):
+            c = ws.cell(row=row, column=col)
+            if c.value:
+                if c.value == 1:
+                    c.border = border_lt
+                elif 2 <= ws.cell(row=row, column=col).value <= 7:
+                    c.border = border_l
+    for row in range(2, 9):
+        ws.cell(row=row, column=last_column).border = border_R
 
+    # Set borders for weeknumbers
+    for col in range(3, last_column):
+        ws.cell(row=9, column=col).border = border_lrtB
+    ws.cell(row=9, column=last_column).border = border_lRtB
 
-
+    # Write changes to file
     wb.save(f"Calendar {MONTH_START}-{YEAR_START} to {MONTH_END}-{YEAR_END}.xlsx")
+    print(f"File saved as: 'Calendar {MONTH_START}-{YEAR_START} to {MONTH_END}-{YEAR_END}.xlsx'")
 
