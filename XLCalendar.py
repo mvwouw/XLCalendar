@@ -23,7 +23,7 @@ General Options:
 import datetime
 import re
 from math import floor
-from sys import argv
+from sys import argv, exit
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
@@ -40,7 +40,7 @@ opt = {
     "FORCE_NL": False,
     "OUTPUT_FILE": f"Calendar.xlsx",
     "OUTPUT_FILE_SET": False,
-    "VERSION": 1.1,
+    "VERSION": 1.11,
     "NL_HOLIDAYS": False,
     "HELP_TEXT": """
 Tiny Calendar - Create handy calendars to print from Excel
@@ -168,7 +168,7 @@ def main() -> None:
                     if not re.fullmatch(r"^[0-9a-zA-Z_\-][0-9a-zA-Z_\-. ]*$", file_name):
                         print(f"\nERROR: Provided filename is not a valid Windows filename.")
                         hae()
-                    opt['OUTPUT_FILE'] = file_name if re.fullmatch(r".xlsx$", file_name) else file_name + ".xlsx"
+                    opt['OUTPUT_FILE'] = file_name if re.fullmatch(r"^.*\.xlsx$", file_name) else file_name + ".xlsx"
                     opt['OUTPUT_FILE_SET'] = True
                 except IndexError:
                     print(f"\nERROR: Option '-o' requires positional argument <output_file>.")
