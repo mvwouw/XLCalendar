@@ -11,11 +11,11 @@ Usage:
 
 General Options:  
     -h, --help          Display help.  
-    -v, --version       Display version.
-    -s <M> <YYYY>       Start calendar with month <M> of year <YYYY>. (Default: month 1 of current year)
-    -e <M> <YYYY>       End calendar with month <M> of year <YYYY>. (Default: month 1 of next year)
-    -o <output_file>    Use <output_file> as filename. (Default: 'Calendar.xlsx')
-    -wr <%>             Resize column widths to <%> percent.
-    -hr <%>             Resize row heights to <%> percent.
-    -fnl                Force day and month names to NL. (Default: OS locale)
-    -mnl                Mark NL general holidays.
+    -v, --version       Display version.  
+    -s <M> <YYYY>       Start calendar with month <M> of year <YYYY>. (Default: month 1 of current year)  
+    -e <M> <YYYY>       End calendar with month <M> of year <YYYY>. (Default: month 1 of next year)  
+    -o <output_file>    Use <output_file> as filename. (Default: 'Calendar.xlsx')  
+    -wr <%>             Resize column widths to <%> percent.  
+    -hr <%>             Resize row heights to <%> percent.  
+    -f <nl | fr>        Force day and month names to NL or FR. (Default: OS locale)  
+    -mnl                Mark NL general holidays.  
