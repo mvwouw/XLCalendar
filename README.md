@@ -4,11 +4,13 @@ I used to make these by hand every year, print them out and stick them underneat
 way to mark dates and see day types and weeknumbers at a glance. Much over-engineered for what it does, but it was a
 fun exercise.
 
-Usage:
+Executable generated with pyinstaller.
+
+Usage:  
     XLCalendar [options]
 
-General Options:
-    -h, --help          Display help.
+General Options:  
+    -h, --help          Display help.  
     -v, --version       Display version.
     -s <M> <YYYY>       Start calendar with month <M> of year <YYYY>. (Default: month 1 of current year)
     -e <M> <YYYY>       End calendar with month <M> of year <YYYY>. (Default: month 1 of next year)

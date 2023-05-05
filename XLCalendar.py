@@ -15,7 +15,7 @@ General Options:
     -o <output_file>    Use <output_file> as filename. (Default: 'Calendar.xlsx')
     -wr <%>             Resize column widths to <%> percent.
     -hr <%>             Resize row heights to <%> percent.
-    -fnl                Force day and month names to NL. (Default: OS locale)
+    -f <nl | fr>        Force day and month names to NL or FR. (Default: OS locale)
     -mnl                Mark NL general holidays.
 """
 
@@ -37,10 +37,10 @@ opt = {
     "M_E": 1,
     "COLUMN_WIDTH": 3.5,
     "ROW_HEIGHT": 12.7,
-    "FORCE_NL": False,
+    "FORCE_LANG": None,
     "OUTPUT_FILE": f"Calendar.xlsx",
     "OUTPUT_FILE_SET": False,
-    "VERSION": 1.11,
+    "VERSION": 1.12,
     "NL_HOLIDAYS": False,
     "HELP_TEXT": """
 Tiny Calendar - Create handy calendars to print from Excel
@@ -56,7 +56,7 @@ General Options:
     -o <output_file>    Use <output_file> as filename. (Default: 'Calendar.xlsx')
     -wr <%>             Resize column widths to <%> percent.
     -hr <%>             Resize row heights to <%> percent.
-    -fnl                Force day and month names to NL. (Default: OS locale)
+    -f <nl | fr>        Force day and month names to NL or FR. (Default: OS locale)
     -mnl                Mark NL general holidays.
 """
 }
@@ -206,9 +206,20 @@ def main() -> None:
                     print(f"\nERROR: Option '-hr' positional argument <%> should be a number > 0.")
                     hae()
 
-            # Option: -fnl
-            elif arg == "-fnl":
-                opt['FORCE_NL'] = True
+            # Option: -f <nl | fr>
+            elif arg == "-f":
+                try:
+                    lang = cl_args.pop()
+                    if lang.lower() == "nl":
+                        opt['FORCE_LANG'] = "nl"
+                    elif lang.lower() == "fr":
+                        opt['FORCE_LANG'] = "fr"
+                    else:
+                        print(f"\nERROR: Option '-f' positional argument <nl | fr> should be one of two options")
+                        hae()
+                except IndexError:
+                    print(f"\nERROR: Option '-f' requires positional argument <nl | fr>.")
+                    hae()
 
             # Option: -mnl
             elif arg == "-mnl":
@@ -314,10 +325,14 @@ def get_holidays(year_start: int, year_end: int) -> list[datetime.date]:
 
 def create_calendar_file() -> None:
     # Get localized day and month names
-    if opt['FORCE_NL']:
+    if opt['FORCE_LANG'] == "nl":
         weekday_dict = {1: "Ma", 2: "Di", 3: "Wo", 4: "Do", 5: "Vr", 6: "Za", 7: "Zo", 8: "Week"}
         month_dict = {1: "Januari", 2: "Februari", 3: "Maart", 4: "April", 5: "Mei", 6: "Juni", 7: "Juli",
                       8: "Augustus", 9: "September", 10: "Oktober", 11: "November", 12: "December"}
+    elif opt['FORCE_LANG'] == "fr":
+        weekday_dict = {1: "Lun", 2: "Mar", 3: "Mer", 4: "Jeu", 5: "Ven", 6: "Ven", 7: "Dim", 8: "Sem"}
+        month_dict = {1: "Janvier", 2: "Février", 3: "Mars", 4: "Avril", 5: "Mai", 6: "Juin", 7: "Juillet",
+                      8: "Août", 9: "Septembre", 10: "Oktobre", 11: "Novembre", 12: "Décembre"}
     else:
         weekday_dict = {}
         i = 1
@@ -382,7 +397,7 @@ def create_calendar_file() -> None:
     # Create an openpyxl worksheet
     wb = Workbook()
     ws = wb.active
-    ws.title = f"Calendar {opt['M_S']}-{opt['Y_S']} to {opt['M_E']}-{opt['Y_E']}"
+    ws.title = f"{opt['M_S']}-{opt['Y_S']} to {opt['M_E']}-{opt['Y_E']}"
 
     # Write row header values and styles
     # First year
@@ -508,7 +523,7 @@ def create_calendar_file() -> None:
         else:
             c.border = border_R
 
-    # Apply borders for weeknumbers row
+    # Apply borders to weeknumbers row
     for col in range(3, last_column):
         ws.cell(row=9, column=col).border = border_lrtB
     ws.cell(row=9, column=last_column).border = border_lRtB
