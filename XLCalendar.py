@@ -33,7 +33,8 @@ from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 opt = {
     "Y_S": int(datetime.date.today().strftime("%Y")),
     "M_S": 1,
-    "Y_E": int(datetime.date.today().strftime("%Y")) + 1,
+    # "Y_E": int(datetime.date.today().strftime("%Y")) + 1,
+    "Y_E": False,
     "M_E": 1,
     "COLUMN_WIDTH": 3.5,
     "ROW_HEIGHT": 12.7,
@@ -106,7 +107,7 @@ def main() -> None:
 
             # Option: help
             if arg == "-h" or arg == "--help":
-                hae()
+                help_and_exit()
 
             # Option: version
             if arg == "-v" or arg == "--version":
@@ -121,21 +122,21 @@ def main() -> None:
                         opt['M_S'] = sm
                     else:
                         print(f"\nERROR: Option '-s' positional argument <M> should be a number from 1 to 12.")
-                        hae()
+                        help_and_exit()
                     sy = int(cl_args.pop())
                     if sy > 0:
                         opt['Y_S'] = sy
                     else:
                         print(f"\nERROR: Option '-s' positional argument <YYYY> should be a number > 0.")
-                        hae()
+                        help_and_exit()
                     if not opt['OUTPUT_FILE_SET']:
                         opt['OUTPUT_FILE'] = f"Calendar {opt['M_S']}-{opt['Y_S']} to {opt['M_E']}-{opt['Y_E']}.xlsx"
                 except IndexError:
                     print(f"\nERROR: Option '-s' requires positional arguments <M> and <YYYY>.")
-                    hae()
+                    help_and_exit()
                 except ValueError:
                     print(f"\nERROR: Option '-s' positional arguments <M> (1-12) and <YYYY> (1-inf) should be numbers.")
-                    hae()
+                    help_and_exit()
 
             # Option: -e <M> <YYYY>
             elif arg == "-e":
@@ -145,21 +146,21 @@ def main() -> None:
                         opt['M_E'] = em
                     else:
                         print(f"\nERROR: Option '-e' positional argument <M> should be a number from 1 to 12.")
-                        hae()
+                        help_and_exit()
                     ey = int(cl_args.pop())
                     if ey > 0:
                         opt['Y_E'] = ey
                     else:
                         print(f"\nERROR: Option '-e' positional argument <YYYY> should be a number > 0.")
-                        hae()
+                        help_and_exit()
                     if not opt['OUTPUT_FILE_SET']:
                         opt['OUTPUT_FILE'] = f"Calendar {opt['M_S']}-{opt['Y_S']} to {opt['M_E']}-{opt['Y_E']}.xlsx"
                 except IndexError:
                     print(f"\nERROR: Option '-e' requires positional arguments <M> and <YYYY>.")
-                    hae()
+                    help_and_exit()
                 except ValueError:
                     print(f"\nERROR: Option '-e' positional arguments <M> (1-12) and <YYYY> (1-inf) should be numbers.")
-                    hae()
+                    help_and_exit()
 
             # Option: -o <output_file>
             elif arg == "-o":
@@ -167,12 +168,12 @@ def main() -> None:
                     file_name = cl_args.pop()
                     if not re.fullmatch(r"^[0-9a-zA-Z_\-][0-9a-zA-Z_\-. ]*$", file_name):
                         print(f"\nERROR: Provided filename is not a valid Windows filename.")
-                        hae()
+                        help_and_exit()
                     opt['OUTPUT_FILE'] = file_name if re.fullmatch(r"^.*\.xlsx$", file_name) else file_name + ".xlsx"
                     opt['OUTPUT_FILE_SET'] = True
                 except IndexError:
                     print(f"\nERROR: Option '-o' requires positional argument <output_file>.")
-                    hae()
+                    help_and_exit()
 
             # Option: -wr <%>
             elif arg == "-wr":
@@ -182,13 +183,13 @@ def main() -> None:
                         opt['COLUMN_WIDTH'] = float(opt['COLUMN_WIDTH'] * (int(wr) / 100))
                     else:
                         print(f"\nERROR: Option '-wr' positional argument <%> should be a number > 0.")
-                        hae()
+                        help_and_exit()
                 except IndexError:
                     print(f"\nERROR: Option '-wr' requires positional argument <%>.")
-                    hae()
+                    help_and_exit()
                 except ValueError:
                     print(f"\nERROR: Option '-wr' positional argument <%> should be a number > 0.")
-                    hae()
+                    help_and_exit()
 
             # Option: -hr <%>
             elif arg == "-hr":
@@ -198,13 +199,13 @@ def main() -> None:
                         opt['ROW_HEIGHT'] = float(opt['ROW_HEIGHT'] * (int(hr) / 100))
                     else:
                         print(f"\nERROR: Option '-hr' positional argument <%> should be a number > 0.")
-                        hae()
+                        help_and_exit()
                 except IndexError:
                     print(f"\nERROR: Option '-hr' requires positional argument <%>.")
-                    hae()
+                    help_and_exit()
                 except ValueError:
                     print(f"\nERROR: Option '-hr' positional argument <%> should be a number > 0.")
-                    hae()
+                    help_and_exit()
 
             # Option: -f <nl | fr>
             elif arg == "-f":
@@ -216,10 +217,10 @@ def main() -> None:
                         opt['FORCE_LANG'] = "fr"
                     else:
                         print(f"\nERROR: Option '-f' positional argument <nl | fr> should be one of two options")
-                        hae()
+                        help_and_exit()
                 except IndexError:
                     print(f"\nERROR: Option '-f' requires positional argument <nl | fr>.")
-                    hae()
+                    help_and_exit()
 
             # Option: -mnl
             elif arg == "-mnl":
@@ -228,27 +229,33 @@ def main() -> None:
             # Unsupported argument provided
             else:
                 print(f"\nERROR: No such option: {arg}")
-                hae()
+                help_and_exit()
+
+        # Set end year to "start year + 1 " if no end year was provided
+        if not opt['Y_E']:
+            opt['Y_E'] = opt['Y_S'] + 1
+            if not opt['OUTPUT_FILE_SET']:
+                opt['OUTPUT_FILE'] = f"Calendar {opt['M_S']}-{opt['Y_S']} to {opt['M_E']}-{opt['Y_E']}.xlsx"
 
         # Check whether end date is at least the same month or later
         if opt['Y_E'] < opt['Y_S']:
             print(f"\nERROR: End date is earlyer than start date.")
-            hae()
+            help_and_exit()
         elif opt['Y_E'] == opt['Y_S']:
             if opt['M_E'] < opt['M_S']:
                 print(f"\nERROR: End date is earlyer than start date.")
-                hae()
+                help_and_exit()
         # Check maximum span of full calendar
         elif opt['Y_E'] - opt['Y_S'] > 100:
             print(f"\nERROR: Calendar cannot span more than 100 years.")
-            hae()
+            help_and_exit()
 
         # All options parsed and validated -> create the file
         print(f"\nCreating calendar running from {opt['M_S']}-{opt['Y_S']} to {opt['M_E']}-{opt['Y_E']}.")
         create_calendar_file()
 
 
-def hae() -> None:
+def help_and_exit() -> None:
     # Display help text and exit
     print(opt['HELP_TEXT'])
     exit()
