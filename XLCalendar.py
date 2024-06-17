@@ -95,6 +95,9 @@ def main() -> None:
     if len(argv) == 1:
         # No command line arguments -> use default settings
         print(f"Generating Tiny Calendar with default settings. Use 'XLCalendar -h' for options.\n")
+        # Set default end-year to start-year + 1
+        opt['Y_E'] = opt['Y_S'] + 1
+
         create_calendar_file()
     else:
         # One or more command line arguments
